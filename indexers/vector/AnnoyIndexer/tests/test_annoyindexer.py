@@ -103,6 +103,32 @@ def test_annoy_indexer_known(metas):
         assert idx.shape == (4, 2)
         np.testing.assert_equal(indexer.query_by_id([7, 4]), vectors[[3, 0]])
 
+    # update
+    with BaseIndexer.load(save_abspath) as indexer:
+        indexer.update([4], np.array([[200, 200, 200]]))
+        indexer.save()
+        assert indexer.size == 4
+
+    with BaseIndexer.load(save_abspath) as indexer:
+        assert isinstance(indexer, AnnoyIndexer)
+        idx, dist = indexer.query(queries, top_k=3)
+        np.testing.assert_equal(idx, np.array([[5, 6, 4], [5, 6, 4], [6, 5, 4], [7, 4, 6]]))
+        assert idx.shape == dist.shape
+        assert idx.shape == (4, 3)
+
+    # delete
+    with BaseIndexer.load(save_abspath) as indexer:
+        indexer.delete([4])
+        indexer.save()
+        assert indexer.size == 3
+
+    with BaseIndexer.load(save_abspath) as indexer:
+        assert isinstance(indexer, AnnoyIndexer)
+        idx, dist = indexer.query(queries, top_k=2)
+        np.testing.assert_equal(idx, np.array([[5, 6], [5, 6], [6, 5], [7, 6]]))
+        assert idx.shape == dist.shape
+        assert idx.shape == (4, 2)
+
 
 def test_annoy_indexer_known_big(metas):
     """Let's try to have some real test. We will have an index with 10k vectors of random values between 5 and 10.
